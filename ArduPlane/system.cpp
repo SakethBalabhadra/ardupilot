@@ -64,10 +64,6 @@ void Plane::init_ardupilot()
     osd.init();
 #endif
 
-#if HAL_LOGGING_ENABLED
-    log_init();
-#endif
-
     AP::compass().set_log_bit(MASK_LOG_COMPASS);
     AP::compass().init();
 
@@ -136,11 +132,6 @@ void Plane::init_ardupilot()
         optflow.init(-1);
     }
 #endif
-
-// init cargo gripper
-#if AP_GRIPPER_ENABLED
-    g2.gripper.init();
-#endif
 }
 
 //********************************************************************************
@@ -175,10 +166,6 @@ void Plane::startup_ground(void)
         FUNCTOR_BIND(&plane, &Plane::Log_Write_Vehicle_Startup_Messages, void)
         );
 #endif
-
-#if AP_SCRIPTING_ENABLED
-    g2.scripting.init();
-#endif // AP_SCRIPTING_ENABLED
 
     // reset last heartbeat time, so we don't trigger failsafe on slow
     // startup

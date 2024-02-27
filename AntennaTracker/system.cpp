@@ -24,14 +24,6 @@ void Tracker::init_ardupilot()
     // try to initialise stream rates in the main loop.
     gcs().update_send();
 
-#if HAL_LOGGING_ENABLED
-    log_init();
-#endif
-
-#if AP_SCRIPTING_ENABLED
-    scripting.init();
-#endif // AP_SCRIPTING_ENABLED
-
     // initialise compass
     AP::compass().set_log_bit(MASK_LOG_COMPASS);
     AP::compass().init();

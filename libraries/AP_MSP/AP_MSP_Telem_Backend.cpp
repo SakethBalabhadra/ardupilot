@@ -201,6 +201,7 @@ void AP_MSP_Telem_Backend::update_home_pos(home_state_t &home_state)
     home_state.home_is_set = _ahrs.home_is_set();
 }
 
+#if AP_GPS_ENABLED
 void AP_MSP_Telem_Backend::update_gps_state(gps_state_t &gps_state)
 {
     AP_GPS& gps = AP::gps();
@@ -220,6 +221,7 @@ void AP_MSP_Telem_Backend::update_gps_state(gps_state_t &gps_state)
         gps_state.ground_course_cd = gps.ground_course_cd();
     }
 }
+#endif
 
 #if AP_BATTERY_ENABLED
 void AP_MSP_Telem_Backend::update_battery_state(battery_state_t &battery_state)
@@ -645,8 +647,10 @@ MSPCommandResult AP_MSP_Telem_Backend::msp_process_out_raw_gps(sbuf_t *dst)
         return MSP_RESULT_ERROR;
     }
 #endif
-    gps_state_t gps_state;
+    gps_state_t gps_state {};
+#if AP_GPS_ENABLED
     update_gps_state(gps_state);
+#endif
 
     // handle airspeed override
     bool airspeed_en = false;
@@ -1023,7 +1027,8 @@ MSPCommandResult AP_MSP_Telem_Backend::msp_process_out_rtc(sbuf_t *dst)
 #if AP_RTC_ENABLED
     if (AP::rtc().get_utc_usec(time_usec)) { // may fail, leaving time_unix at 0
         const time_t time_sec = time_usec / 1000000;
-        localtime_tm = *gmtime(&time_sec);
+        struct tm tmd {};
+        localtime_tm = *gmtime_r(&time_sec, &tmd);
     }
 #endif
     const struct PACKED {
@@ -1051,6 +1056,7 @@ MSPCommandResult AP_MSP_Telem_Backend::msp_process_out_rtc(sbuf_t *dst)
 #if AP_RC_CHANNEL_ENABLED
 MSPCommandResult AP_MSP_Telem_Backend::msp_process_out_rc(sbuf_t *dst)
 {
+#if AP_RCMAPPER_ENABLED
     const RCMapper* rcmap = AP::rcmap();
     if (rcmap == nullptr) {
         return MSP_RESULT_ERROR;
@@ -1074,6 +1080,9 @@ MSPCommandResult AP_MSP_Telem_Backend::msp_process_out_rc(sbuf_t *dst)
 
     sbuf_write_data(dst, &rc, sizeof(rc));
     return MSP_RESULT_ACK;
+#else
+    return MSP_RESULT_ERROR;
+#endif
 }
 #endif  // AP_RC_CHANNEL_ENABLED
 

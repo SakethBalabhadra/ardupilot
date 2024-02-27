@@ -6,10 +6,6 @@
 #include "RC_Channel.h"
 #include <AP_Proximity/AP_Proximity.h>
 
-#include <AP_Gripper/AP_Gripper_config.h>
-#if AP_GRIPPER_ENABLED
- # include <AP_Gripper/AP_Gripper.h>
-#endif
 #if MODE_FOLLOW_ENABLED == ENABLED
  # include <AP_Follow/AP_Follow.h>
 #endif
@@ -508,10 +504,6 @@ public:
     AP_Button *button_ptr;
 #endif
 
-#if AP_GRIPPER_ENABLED
-    AP_Gripper gripper;
-#endif
-
 #if MODE_THROW_ENABLED == ENABLED
     // Throw mode parameters
     AP_Int8 throw_nextmode;
@@ -600,10 +592,6 @@ public:
     void *autotune_ptr;
 #endif
 
-#if AP_SCRIPTING_ENABLED
-    AP_Scripting scripting;
-#endif // AP_SCRIPTING_ENABLED
-
     AP_Float tuning_min;
     AP_Float tuning_max;
 
@@ -684,6 +672,9 @@ public:
     AP_Int16 takeoff_rpm_min;
     AP_Int16 takeoff_rpm_max;
 #endif
+
+    // EKF variance filter cutoff
+    AP_Float fs_ekf_filt_hz;
 
 #if WEATHERVANE_ENABLED == ENABLED
     AC_WeatherVane weathervane;

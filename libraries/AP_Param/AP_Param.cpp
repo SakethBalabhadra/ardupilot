@@ -969,7 +969,6 @@ AP_Param::find_by_index(uint16_t idx, enum ap_var_type *ptype, ParamToken *token
 AP_Param* AP_Param::find_by_name(const char* name, enum ap_var_type *ptype, ParamToken *token)
 {
     AP_Param *ap;
-    uint16_t count = 0;
     for (ap = AP_Param::first(token, ptype);
          ap && *ptype != AP_PARAM_GROUP && *ptype != AP_PARAM_NONE;
          ap = AP_Param::next_scalar(token, ptype)) {
@@ -981,7 +980,6 @@ AP_Param* AP_Param::find_by_name(const char* name, enum ap_var_type *ptype, Para
                 break;
             }
         }
-        count++;
     }
     return ap;
 }
@@ -2033,7 +2031,7 @@ void AP_Param::convert_old_parameters_scaled(const struct ConversionInfo *conver
 // is_top_level: Is true if the class had its own top level key, param_key. It is false if the class was a subgroup
 void AP_Param::convert_class(uint16_t param_key, void *object_pointer,
                                     const struct AP_Param::GroupInfo *group_info,
-                                    uint16_t old_index, uint16_t old_top_element, bool is_top_level)
+                                    uint16_t old_index, bool is_top_level)
 {
     const uint8_t group_shift = is_top_level ? 0 : 6;
 
@@ -2073,6 +2071,22 @@ void AP_Param::convert_class(uint16_t param_key, void *object_pointer,
     // causing a save to be done on a converted parameter
     flush();
 }
+
+// convert an object which was stored in a vehicle's G2 into a new
+// object in AP_Vehicle.cpp:
+void AP_Param::convert_g2_objects(const void *g2, const G2ObjectConversion g2_conversions[], uint8_t num_conversions)
+{
+    // Find G2's Top Level Key
+    ConversionInfo info;
+    if (!find_top_level_key_by_pointer(g2, info.old_key)) {
+        return;
+    }
+    for (uint8_t i=0; i<num_conversions; i++) {
+        const auto &c { g2_conversions[i] };
+        convert_class(info.old_key, c.object_pointer, c.var_info, c.old_index, false);
+    }
+}
+
 
 /*
  convert width of a parameter, allowing update to wider scalar values
@@ -2369,8 +2383,7 @@ bool AP_Param::load_defaults_file(const char *filename, bool last_pass)
 }
 #endif // AP_PARAM_DEFAULTS_FILE_PARSING_ENABLED
 
-
-#if AP_PARAM_MAX_EMBEDDED_PARAM > 0 || (!AP_FILESYSTEM_FILE_READING_ENABLED && defined(HAL_HAVE_AP_ROMFS_EMBEDDED_H))
+#if AP_PARAM_MAX_EMBEDDED_PARAM > 0 || defined(HAL_HAVE_AP_ROMFS_EMBEDDED_H)
 /*
   count the number of parameter defaults present in supplied string
  */
@@ -2415,18 +2428,6 @@ bool AP_Param::count_param_defaults(const volatile char *ptr, int32_t length, ui
     }
     return true;
 }
-
-#if AP_PARAM_MAX_EMBEDDED_PARAM > 0
-/*
- * load a default set of parameters from a embedded parameter region
- * @last_pass: if this is the last pass on defaults - unknown parameters are
- *             ignored but if this is set a warning will be emitted
- */
-void AP_Param::load_embedded_param_defaults(bool last_pass)
-{
-    load_param_defaults(param_defaults_data.data, param_defaults_data.length, last_pass);
-}
-#endif  // AP_PARAM_MAX_EMBEDDED_PARAM > 0
 
 /*
  *  load parameter defaults from supplied string
@@ -2508,7 +2509,21 @@ void AP_Param::load_param_defaults(const volatile char *ptr, int32_t length, boo
     }
     num_param_overrides = num_defaults;
 }
-#endif // AP_PARAM_MAX_EMBEDDED_PARAM > 0
+#endif // AP_PARAM_MAX_EMBEDDED_PARAM > 0 || defined(HAL_HAVE_AP_ROMFS_EMBEDDED_H)
+
+
+#if AP_PARAM_MAX_EMBEDDED_PARAM > 0
+/*
+ * load a default set of parameters from a embedded parameter region
+ * @last_pass: if this is the last pass on defaults - unknown parameters are
+ *             ignored but if this is set a warning will be emitted
+ */
+void AP_Param::load_embedded_param_defaults(bool last_pass)
+{
+    load_param_defaults(param_defaults_data.data, param_defaults_data.length, last_pass);
+}
+#endif  // AP_PARAM_MAX_EMBEDDED_PARAM > 0
+
 
 /* 
    find a default value given a pointer to a default value in flash

@@ -3,7 +3,6 @@
 #define AP_PARAM_VEHICLE_NAME plane
 
 #include <AP_Common/AP_Common.h>
-#include <AP_Gripper/AP_Gripper.h>
 
 // Global parameter class.
 //
@@ -512,16 +511,7 @@ public:
     // home reset altitude threshold
     AP_Int8 home_reset_threshold;
 
-#if AP_GRIPPER_ENABLED
-    // Payload Gripper
-    AP_Gripper gripper;
-#endif
-
     AP_Int32 flight_options;
-
-#if AP_SCRIPTING_ENABLED
-    AP_Scripting scripting;
-#endif // AP_SCRIPTING_ENABLED
 
     AP_Int8 takeoff_throttle_accel_count;
     AP_Int8 takeoff_timeout;
